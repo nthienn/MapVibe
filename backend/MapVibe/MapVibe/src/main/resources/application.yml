@@ -16,6 +16,18 @@ spring:
       hibernate:
         format_sql: true
 
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080
 
@@ -32,3 +44,9 @@ cloudinary:
 mapvina:
   api-key: ${MAPVINA_API_KEY}
   search-url: ${MAPVINA_SEARCH_URL}
+
+app:
+  mail:
+    from: ${MAIL_FROM:no-reply@mapvibe.com}
+
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}

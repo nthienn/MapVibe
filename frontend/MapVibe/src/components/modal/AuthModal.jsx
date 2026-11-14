@@ -1,16 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "../../utils/error";
 
-const AuthModal = ({ isOpen, onClose }) => {
-  const { login, register } = useAuth();
+const AuthModal = ({
+  isOpen,
+  onClose,
+  initialTab = "login",
+  initialEmail = "",
+}) => {
+  const { login, register, resendVerificationEmail } = useAuth();
   const [activeTab, setActiveTab] = useState("login");
   const [shouldRender, setShouldRender] = useState(false);
   const [animClass, setAnimClass] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
-  const loginPasswordRef = useRef(null);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
 
   const [loginData, setLoginData] = useState({
     email: "",
@@ -45,24 +52,24 @@ const AuthModal = ({ isOpen, onClose }) => {
       return;
     }
 
+    const email = registerData.email.trim();
+
     try {
       setRegisterLoading(true);
 
       await register({
         name: registerData.name.trim(),
-        email: registerData.email.trim(),
+        email,
         password: registerData.password,
       });
 
-      toast.success("Đăng ký thành công. Vui lòng đăng nhập.");
-      setActiveTab("login");
+      // Chuyển sang trạng thái chờ xác thực email
+      setVerificationEmail(email);
+      setVerificationPending(true);
 
-      requestAnimationFrame(() => {
-        loginPasswordRef.current?.focus();
-      });
-
+      // Điền sẵn email ở tab Login
       setLoginData({
-        email: registerData.email.trim(),
+        email,
         password: "",
       });
 
@@ -79,10 +86,30 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleResendVerification = async () => {
+    try {
+      setResendLoading(true);
+
+      await resendVerificationEmail(verificationEmail);
+
+      toast.success(
+        "Nếu tài khoản tồn tại và chưa xác thực, email xác thực sẽ được gửi lại.",
+      );
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Không thể gửi lại email xác thực."),
+      );
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(initialTab);
+
       setLoginData({
-        email: "",
+        email: initialEmail,
         password: "",
       });
 
@@ -93,10 +120,14 @@ const AuthModal = ({ isOpen, onClose }) => {
         confirmPassword: "",
       });
 
+      setVerificationPending(false);
+      setVerificationEmail("");
+      setResendLoading(false);
+
       setLoginLoading(false);
       setRegisterLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, initialTab, initialEmail]);
 
   useEffect(() => {
     let timeoutId;
@@ -200,7 +231,6 @@ const AuthModal = ({ isOpen, onClose }) => {
                             Password:
                             <i className="im im-icon-Lock-2"></i>
                             <input
-                              ref={loginPasswordRef}
                               className="input-text"
                               type="password"
                               name="password"
@@ -222,19 +252,11 @@ const AuthModal = ({ isOpen, onClose }) => {
                         <div className="form-row">
                           <button
                             type="submit"
-                            className="button border margin-top-5"
+                            className="button border fullwidth margin-top-5"
                             disabled={loginLoading}
                           >
                             {loginLoading ? "Signing In..." : "Login"}
                           </button>
-                          <div className="checkboxes margin-top-10">
-                            <input
-                              id="remember-me"
-                              type="checkbox"
-                              name="check"
-                            />
-                            <label htmlFor="remember-me">Remember Me</label>
-                          </div>
                         </div>
                       </form>
                     </div>
@@ -243,99 +265,165 @@ const AuthModal = ({ isOpen, onClose }) => {
                   {/* Register */}
                   {activeTab === "register" && (
                     <div className="tab-content" id="tab2">
-                      <form
-                        method="post"
-                        className="register"
-                        onSubmit={handleRegisterSubmit}
-                      >
-                        <p className="form-row form-row-wide">
-                          <label htmlFor="username2">
-                            Name:
-                            <i className="im im-icon-Male"></i>
-                            <input
-                              type="text"
-                              className="input-text"
-                              name="username"
-                              id="username2"
-                              value={registerData.name}
-                              onChange={(e) =>
-                                setRegisterData((prev) => ({
-                                  ...prev,
-                                  name: e.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                        </p>
+                      {verificationPending ? (
+                        <div className="verification-pending">
+                          <div className="verification-icon">
+                            <h4>
+                              <i className="im im-icon-Mail"></i> Verify Your
+                              Email
+                            </h4>
+                          </div>
 
-                        <p className="form-row form-row-wide">
-                          <label htmlFor="email2">
-                            Email Address:
-                            <i className="im im-icon-Mail"></i>
-                            <input
-                              type="text"
-                              className="input-text"
-                              name="email"
-                              id="email2"
-                              value={registerData.email}
-                              onChange={(e) =>
-                                setRegisterData((prev) => ({
-                                  ...prev,
-                                  email: e.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                        </p>
+                          <p className="form-row form-row-wide">
+                            <label>
+                              Your account has been created successfully. Please
+                              check your inbox and verify your email address.
+                            </label>
+                            <label>
+                              We sent a verification link to:{" "}
+                              <strong>{verificationEmail}</strong>
+                            </label>
+                            <label>
+                              The verification link expires in 15 minutes.
+                            </label>
+                          </p>
 
-                        <p className="form-row form-row-wide">
-                          <label htmlFor="password1">
-                            Password:
-                            <i className="im im-icon-Lock-2"></i>
-                            <input
-                              className="input-text"
-                              type="password"
-                              name="password1"
-                              id="password1"
-                              value={registerData.password}
-                              onChange={(e) =>
-                                setRegisterData((prev) => ({
-                                  ...prev,
-                                  password: e.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                        </p>
+                          <div className="form-row">
+                            <button
+                              type="button"
+                              className="button border fullwidth margin-top-5"
+                              onClick={handleResendVerification}
+                              disabled={resendLoading}
+                            >
+                              {resendLoading
+                                ? "Sending..."
+                                : "Resend Verification Email"}
+                            </button>
 
-                        <p className="form-row form-row-wide">
-                          <label htmlFor="password2">
-                            Repeat Password:
-                            <i className="im im-icon-Lock-2"></i>
-                            <input
-                              className="input-text"
-                              type="password"
-                              name="password2"
-                              id="password2"
-                              value={registerData.confirmPassword}
-                              onChange={(e) =>
-                                setRegisterData((prev) => ({
-                                  ...prev,
-                                  confirmPassword: e.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                        </p>
-
-                        <button
-                          type="submit"
-                          className="button border fw margin-top-10"
-                          disabled={registerLoading}
+                            <div className="margin-top-10 text-center">
+                              <label>
+                                Already verified your email?{" "}
+                                <span className="lost_password">
+                                  <a
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setActiveTab("login");
+                                    }}
+                                  >
+                                    Log In
+                                  </a>
+                                </span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <form
+                          method="post"
+                          className="register"
+                          onSubmit={handleRegisterSubmit}
                         >
-                          {registerLoading ? "Registering..." : "Register"}
-                        </button>
-                      </form>
+                          {/* Name */}
+                          <p className="form-row form-row-wide">
+                            <label htmlFor="username2">
+                              Name:
+                              <i className="im im-icon-Male"></i>
+                              <input
+                                type="text"
+                                className="input-text"
+                                name="username"
+                                id="username2"
+                                value={registerData.name}
+                                required
+                                onChange={(e) =>
+                                  setRegisterData((prev) => ({
+                                    ...prev,
+                                    name: e.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                          </p>
+
+                          {/* Email */}
+                          <p className="form-row form-row-wide">
+                            <label htmlFor="email2">
+                              Email Address:
+                              <i className="im im-icon-Mail"></i>
+                              <input
+                                type="email"
+                                className="input-text"
+                                name="email"
+                                id="email2"
+                                value={registerData.email}
+                                required
+                                autoComplete="email"
+                                onChange={(e) =>
+                                  setRegisterData((prev) => ({
+                                    ...prev,
+                                    email: e.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                          </p>
+
+                          {/* Password */}
+                          <p className="form-row form-row-wide">
+                            <label htmlFor="password1">
+                              Password:
+                              <i className="im im-icon-Lock-2"></i>
+                              <input
+                                className="input-text"
+                                type="password"
+                                name="password1"
+                                id="password1"
+                                value={registerData.password}
+                                required
+                                autoComplete="new-password"
+                                onChange={(e) =>
+                                  setRegisterData((prev) => ({
+                                    ...prev,
+                                    password: e.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                          </p>
+
+                          {/* Confirm Password */}
+                          <p className="form-row form-row-wide">
+                            <label htmlFor="password2">
+                              Repeat Password:
+                              <i className="im im-icon-Lock-2"></i>
+                              <input
+                                className="input-text"
+                                type="password"
+                                name="password2"
+                                id="password2"
+                                value={registerData.confirmPassword}
+                                required
+                                autoComplete="new-password"
+                                onChange={(e) =>
+                                  setRegisterData((prev) => ({
+                                    ...prev,
+                                    confirmPassword: e.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                          </p>
+
+                          <button
+                            type="submit"
+                            className="button border fullwidth margin-top-10"
+                            disabled={registerLoading}
+                          >
+                            {registerLoading ? "Registering..." : "Register"}
+                          </button>
+                        </form>
+                      )}
                     </div>
                   )}
                 </div>

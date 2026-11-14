@@ -47,7 +47,7 @@ const DashboardContent = ({ dashboard, loading }) => {
     {
       value: dashboard?.totalPermissions ?? 0,
       label: "Total Permissions",
-      icon: "im im-icon-Lock-2",
+      icon: "im im-icon-Lock",
       colorClass: "color-8",
     },
   ];

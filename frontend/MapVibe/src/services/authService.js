@@ -41,6 +41,24 @@ const authService = {
 
         return response.data.result;
     },
+
+    async verifyEmail(token) {
+        const response = await authApi.post(
+            `${API_ENDPOINTS.AUTH.VERIFY_EMAIL}`,
+            { token }
+        );
+
+        return response.data.result;
+    },
+
+    async resendVerificationEmail(email) {
+        const response = await authApi.post(
+            `${API_ENDPOINTS.AUTH.RESEND_VERIFICATION}`,
+            { email }
+        );
+
+        return response.data.result;
+    },
 };
 
 export default authService;

@@ -81,6 +81,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const resendVerificationEmail = async (email) => {
+    return authService.resendVerificationEmail(email);
+  };
+
   const updateUser = (data) => {
     setUser((prev) => ({
       ...prev,
@@ -101,6 +105,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         register,
+        resendVerificationEmail,
 
         updateUser,
         refreshUser,

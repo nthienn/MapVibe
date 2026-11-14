@@ -1,13 +1,11 @@
 package com.mapvibe.MapVibe.controller;
 
-import com.mapvibe.MapVibe.dto.request.AuthenticationRequest;
-import com.mapvibe.MapVibe.dto.request.LogoutRequest;
-import com.mapvibe.MapVibe.dto.request.RefreshRequest;
-import com.mapvibe.MapVibe.dto.request.UserCreateRequest;
+import com.mapvibe.MapVibe.dto.request.*;
 import com.mapvibe.MapVibe.dto.response.ApiResponse;
 import com.mapvibe.MapVibe.dto.response.AuthenticationResponse;
 import com.mapvibe.MapVibe.dto.response.UserResponse;
 import com.mapvibe.MapVibe.service.AuthenticationService;
+import com.mapvibe.MapVibe.service.EmailVerificationService;
 import com.mapvibe.MapVibe.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
@@ -29,6 +27,7 @@ public class AuthenticationController {
 
     AuthenticationService authenticationService;
     UserService userService;
+    EmailVerificationService emailVerificationService;
 
     @PostMapping("/register")
     public ApiResponse<UserResponse> register(@RequestBody @Valid UserCreateRequest request) {
@@ -58,6 +57,22 @@ public class AuthenticationController {
         authenticationService.logout(request);
 
         return ApiResponse.<Void>builder()
+                .build();
+    }
+
+    @PostMapping("/verify-email")
+    public ApiResponse<String> verifyEmail(@RequestBody @Valid VerifyEmailRequest request) {
+        return ApiResponse.<String>builder()
+                .result(emailVerificationService.verifyEmail(request.getToken()))
+                .build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ApiResponse<String> resendVerificationEmail(@RequestBody @Valid ResendVerificationRequest request) {
+        emailVerificationService.resendVerificationEmail(request.getEmail());
+
+        return ApiResponse.<String>builder()
+                .result("If the account exists and is not verified, a verification email has been sent.")
                 .build();
     }
 }

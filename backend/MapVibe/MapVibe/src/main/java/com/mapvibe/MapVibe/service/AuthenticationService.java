@@ -62,6 +62,10 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
+        if (!user.isEmailVerified()) {
+            throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.USER_ACCOUNT_SUSPENDED);
         }

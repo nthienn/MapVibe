@@ -31,6 +31,7 @@ import AdminRolesPage from "./pages/admin/roles/AdminRolesPage";
 import AdminPermissionsPage from "./pages/admin/permissions/AdminPermissionsPage";
 import AdminIcon from "./pages/admin/components/AdminIcon";
 import Contact from "./pages/Contact";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -234,6 +235,8 @@ const AppRoutes = () => {
         />
 
         <Route path="/contact" element={<Contact />} />
+
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         <Route path="*" element={<NotFound />} />
         <Route path="/404" element={<NotFound />} />

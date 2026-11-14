@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { ToastContainer } from "react-toastify";
 import Header from "./Header";
@@ -8,14 +8,60 @@ import MobileMenu from "./MobileMenu";
 import AuthModal from "../modal/AuthModal";
 
 const Layout = ({ children }) => {
-  const { isAuthModalOpen, closeAuthModal } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthModalOpen, openAuthModal, closeAuthModal } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isButtonActive, setIsButtonActive] = useState(false);
   const [isMenuVisualOpen, setIsMenuVisualOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [authModalInitialTab, setAuthModalInitialTab] = useState("login");
+  const [authModalInitialEmail, setAuthModalInitialEmail] = useState("");
 
-  const location = useLocation();
   const isListingsPage = location.pathname === "/listings";
+
+  useEffect(() => {
+    const authState = location.state;
+
+    if (!authState?.openAuthModal) {
+      return;
+    }
+
+    // Thiết lập tab và email cho AuthModal
+    setAuthModalInitialTab(authState.authTab || "login");
+    setAuthModalInitialEmail(authState.email || "");
+
+    // Mở AuthModal
+    openAuthModal();
+
+    // Xóa navigation state để tránh mở modal lại khi refresh
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+      },
+      {
+        replace: true,
+        state: null,
+      },
+    );
+  }, [
+    location.state,
+    location.pathname,
+    location.search,
+    location.hash,
+    navigate,
+    openAuthModal,
+  ]);
+
+  const handleCloseAuthModal = () => {
+    closeAuthModal();
+
+    // Xóa thông tin khởi tạo để lần mở tiếp theo không dùng email cũ
+    setAuthModalInitialTab("login");
+    setAuthModalInitialEmail("");
+  };
 
   useEffect(() => {
     const handleGlobalScroll = () => {
@@ -86,7 +132,12 @@ const Layout = ({ children }) => {
 
   return (
     <>
-      <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        initialTab={authModalInitialTab}
+        initialEmail={authModalInitialEmail}
+      />
 
       <MobileMenu
         isOpen={isMenuVisualOpen}

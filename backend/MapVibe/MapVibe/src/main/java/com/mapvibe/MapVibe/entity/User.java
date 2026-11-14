@@ -49,4 +49,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     UserStatus status;
+
+    @Column(name = "email_verified", nullable = false)
+    boolean emailVerified;
 }

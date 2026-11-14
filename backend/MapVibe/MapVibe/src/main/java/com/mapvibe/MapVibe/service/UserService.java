@@ -34,6 +34,7 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     MediaService mediaService;
     CurrentUserService currentUserService;
+    EmailVerificationService emailVerificationService;
 
     String DEFAULT_AVATAR = "https://secure.gravatar.com/avatar/984b55e34aa3bd7513b190f8409e3e3b?s=120&d=mm&r=g";
 
@@ -46,6 +47,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setAvatar(DEFAULT_AVATAR);
         user.setStatus(UserStatus.ACTIVE);
+        user.setEmailVerified(false);
 
         Role defaultRole = roleRepository.findById("USER")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
@@ -54,7 +56,11 @@ public class UserService {
         roles.add(defaultRole);
         user.setRoles(roles);
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        emailVerificationService.sendVerificationEmail(savedUser);
+
+        return userMapper.toUserResponse(savedUser);
     }
 
     @PreAuthorize("hasRole('USER')")

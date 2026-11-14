@@ -504,7 +504,30 @@ public enum ErrorCode {
             14000,
             HttpStatus.BAD_REQUEST,
             "Trạng thái listing không hợp lệ."
-    );
+    ),
+
+    // ==========================================================
+    // Email
+    // ==========================================================
+
+    INVALID_EMAIL_VERIFICATION_TOKEN(
+            15000,
+            HttpStatus.BAD_REQUEST,
+            "Invalid Email Verification Token."
+    ),
+
+    EMAIL_VERIFICATION_TOKEN_EXPIRED(
+            15001,
+            HttpStatus.BAD_REQUEST,
+            "Email Verification Token Expired."
+    ),
+
+    EMAIL_NOT_VERIFIED(
+            15002,
+            HttpStatus.BAD_REQUEST,
+            "Email Not Verified."
+    ),
+    ;
 
     int code;
     HttpStatusCode statusCode;

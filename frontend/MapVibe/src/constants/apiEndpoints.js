@@ -14,6 +14,8 @@ export const API_ENDPOINTS = {
         REGISTER: "/auth/register",
         REFRESH: "/auth/refresh",
         LOGOUT: "/auth/logout",
+        VERIFY_EMAIL: '/auth/verify-email',
+        RESEND_VERIFICATION: '/auth/resend-verification',
     },
 
     USERS: {
